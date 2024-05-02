@@ -1,0 +1,8 @@
+I took my last assignment I made and added a class to it. I then threw my code from the last stepping stone in and had to change it a bit to make it work with the class.
+This is definately where the tires hit the road. In other languages we are basically creating functions they are jnust called methods here. What I like about java is that it constructs a bunch of functions into a class. Python can kind of do that, but not as well. probably why its so slow.
+
+this really set me on my path to do my final.
+
+Ill be honest I didnt download the old file. I just started working off the file in my IDE
+
+some changes if I spent more time on this would be to split the list and select method into two

@@ -1,0 +1,238 @@
+// Variables
+variable defaultIngredientListExists: boolean
+variable defaultRecipeListExists: boolean
+variable map defaultIngredientList
+    key ingredientName: string
+    key caloriesPerCup: double
+
+variable map localIngredientList
+    key ingredientName: string
+    key caloriesPerCup: double
+
+variable map defaultRecipeList
+    key recipeName: string
+    key servings: double
+    key ingredients
+        key ingredientName: string
+        value cups: double
+
+variable map localRecipeList
+    key recipeName: string
+    key servings: double
+    key ingredients
+
+// Initial checks to determine if default lists exist and set boolean flags accordingly
+check for default_ingredient_list.json -> defaultIngredientListExists
+check for default_recipe_list.json -> defaultRecipeListExists
+    // If default lists exist, load them into corresponding variables; if not, create empty lists
+    if defaults exist, load them into defaultIngredientList and defaultRecipeList
+    if not, create empty files for both
+
+// Load default lists into variables
+set defaultIngredientList from default_ingredient_list.json
+set defaultRecipeList from default_recipe_list.json
+
+// Copy data from default lists to local versions for manipulation
+set localIngredientList from defaultIngredientList
+set localRecipeList from defaultRecipeList
+
+class Ingredient
+    // Variables to store ingredient details
+    variable ingredientName: string
+    variable caloriesPerCup: double
+
+    // Update or add ingredient details in local list
+    method updateIngredient(ingredientName, caloriesPerCup)
+        // Check if ingredient exists in local list
+        if ingredientName found in localIngredientList
+            // If found, update calorie count if different
+            for each ingredient in localIngredientList
+                if ingredient.ingredientName = ingredientName and ingredient.caloriesPerCup != caloriesPerCup
+                    set ingredient.caloriesPerCup to caloriesPerCup
+        else
+            // If not found, add new ingredient to local list
+            call addIngredientLocal(ingredientName, caloriesPerCup)
+
+    // Add new ingredient to local list
+    method addIngredientLocal(ingredientName, caloriesPerCup)
+        // Check if ingredient already exists to prevent duplicates
+        if ingredientName found in localIngredientList
+            return "Error: Ingredient exists"
+        else
+            // Add new ingredient to local list
+            add ingredient to localIngredientList with ingredientName and caloriesPerCup
+
+    // Add new ingredient to default list for long-term storage
+    method addIngredientDefault(ingredientName, caloriesPerCup)
+        // Check if ingredient already exists in default list
+        if ingredientName found in defaultIngredientList
+            return "Error: Ingredient exists"
+        else
+            // Add new ingredient to default list
+            add ingredient to defaultIngredientList with ingredientName and caloriesPerCup
+
+    // Retrieve an ingredient's name from the local list
+    method getIngredientName(ingredientName) -> string
+        // Check if ingredient exists in local list
+        if ingredientName found in localIngredientList
+            return ingredientName
+        else
+            return "Error: Ingredient not found"
+
+    // Retrieve calorie count per cup for an ingredient from the local list
+    method getCaloriesPerCup(ingredientName) -> double
+        // Check if ingredient exists in local list
+        if ingredientName found in localIngredientList
+            return caloriesPerCup for ingredientName
+        else
+            return "Error: Ingredient not found"
+
+   // Synchronize local ingredient list with default list
+   method syncIngredientLists()
+        // Loop through local list and add/update entries in default list as necessary
+        for each ingredient in localIngredientList
+            if ingredient not found in defaultIngredientList or ingredient.caloriesPerCup NOT EQUAL defaultIngredientList[ingredient.ingredientName].caloriesPerCup
+                call addIngredientDefault(ingredient.ingredientName, ingredient.caloriesPerCup)
+
+    // Save default ingredient list to file for persistence
+    method saveIngredientList()
+        convert defaultIngredientList to JSON
+        write JSON to default_ingredient_list.json
+
+class Recipe
+    // Variables to store recipe details
+    variable recipeName: string
+    variable servings: integer
+    variable ingredients: map
+        key ingredientName: string
+        value cups: double
+    variable totalCalories: double
+
+    // Update or add recipe details in local list
+    method updateRecipe(recipeName, servings, ingredients)
+        // Check if recipe exists in local list
+        if recipeName found in localRecipeList
+            // If found, update servings and ingredients
+            for each recipe in localRecipeList
+                if recipe.recipeName = recipeName
+                    update recipe.servings and recipe.ingredients
+        else
+            // If not found, add new recipe to local list
+            call addRecipeLocal(recipeName, servings, ingredients)
+
+    // Add new recipe to local list
+    method addRecipeLocal(recipeName, servings, ingredients)
+        // Check if recipe already exists to prevent duplicates
+        if recipeName found in localRecipeList
+            return "Error: Recipe exists"
+        else
+            // Add new recipe to local list
+            call recipe method recipe.updateRecipe(recipeName, servings, ingredients)
+
+    // Add new recipe to default list for long-term storage
+    method addRecipeDefault(recipeName, servings, ingredients)
+        // Check if recipe already exists in default list
+        if recipeName found in defaultRecipeList
+            return "Error: Recipe exists"
+        else
+            // Add new recipe to default list
+            add recipe to defaultRecipeList with recipeName, servings, and ingredients
+
+    // Retrieve a recipe's name from the local list
+    method getRecipeName(recipeName) -> string
+        // Check if recipe exists in local list
+        if recipeName found in localRecipeList
+            return recipeName
+        else
+            return "Error: Recipe not found"
+
+    // Retrieve serving count for a recipe from the local list
+    method getServings(recipeName) -> integer
+        // Check if recipe exists in local list
+        if recipeName found in localRecipeList
+            return servings for recipeName
+        else
+            return "Error: Recipe not found"
+
+    // Retrieve ingredient details for a recipe from the local list
+    method getIngredients(recipeName) -> map
+        // Check if recipe exists in local list
+        if recipeName found in localRecipeList
+            return ingredients for recipeName
+        else
+            return "Error: Recipe not found"
+
+    // Calculate total calories for a recipe based on its ingredients and quantities
+    METHOD getTotalRecipeCalories(recipeName,numberOfCups ) RETURNS DOUBLE
+        // Initialize total calories to 0
+        SET totalRecipeCalories TO 0
+        // Loop through ingredients and calculate total calories
+        FOR EACH ingredient IN recipe.getIngredients
+            add totalRecipeCalories TO  numberOfCups * ingredients.caloriesPerCup
+        // Return total calorie count
+        RETURN totalRecipeCalories
+
+    // Synchronize local recipe list with default list
+    method syncRecipeLists()
+        // Loop through local list and add/update entries in default list as necessary
+        for each recipe in localRecipeList
+            if recipe not found in defaultRecipeList
+                // If recipe not in default list, add it
+                call addRecipeDefault(recipe.recipeName, recipe.servings, recipe.ingredients)
+            else
+                // If recipe exists, check for updates
+                update recipe in defaultRecipeList if needed
+
+    // Save default recipe list to file for persistence
+    method saveRecipeList()
+        convert defaultRecipeList to JSON
+        write JSON to default_recipe_list.json
+
+class Cookbook
+
+    // List all recipe names from the local list
+    method listRecipeNames() -> list
+        // Initialize an empty list to hold recipe names
+        create an empty list called recipeNames
+        // Loop through local recipe list and add each name to the list
+        for each recipeEntry in localRecipeList
+            extract recipeName from recipeEntry
+            add recipeName to recipeNames
+        // Return the list of recipe names
+        return recipeNames
+
+    // List detailed information for all recipes, including ingredients and total calories
+    method listRecipeDetails() -> list
+        // Initialize an empty list to hold detailed recipe information
+        create an empty list called recipesDetails
+        // Loop through local recipe list to compile details
+        for each recipeEntry in localRecipeList
+            // Initialize an empty map to hold individual recipe details
+            create an empty map called recipeDetail
+            extract recipeName, servings, and ingredients from recipeEntry
+            // Set basic recipe information
+            set recipeDetail["Name"] to recipeName
+            set recipeDetail["Servings"] to servings
+            // Initialize an empty list to hold ingredient details
+            create an empty list called ingredientDetails
+            // Loop through each ingredient to compile its details
+            for each ingredientEntry in ingredients
+                // Initialize an empty map to hold individual ingredient details
+                create an empty map called ingredientDetail
+                extract ingredientName and cups from ingredientEntry
+                // Find corresponding calorie count from local ingredient list
+                find caloriesPerCup for ingredientName in localIngredientList
+                // Set ingredient details
+                set ingredientDetail["Name"] to ingredientName
+                set ingredientDetail["Cups"] to cups
+                set ingredientDetail["Calories Per Cup"] to caloriesPerCup
+                // Add ingredient details to the list
+                add ingredientDetail to ingredientDetails
+            // Calculate total calories for the recipe
+            set recipeDetail["totalCalories"] recipe.getTotalRecipeCalories(recipeName)
+            // Set ingredient details for the recipe
+            set recipeDetail["Ingredients"] to ingredientDetails
+            // Add detailed recipe information to the list
+            add recipeDetail to recipesDetails
+        // Return the list of detailed recipe information
+        return recipesDetails

@@ -1,0 +1,62 @@
+class Ingredient
+    // Variables to store ingredient details
+    variable ingredientName: string
+    variable caloriesPerCup: double
+
+    // Update or add ingredient details in local list
+    method updateIngredient(ingredientName, caloriesPerCup)
+        // Check if ingredient exists in local list
+        if ingredientName found in localIngredientList
+            // If found, update calorie count if different
+            for each ingredient in localIngredientList
+                if ingredient.ingredientName = ingredientName and ingredient.caloriesPerCup != caloriesPerCup
+                    set ingredient.caloriesPerCup to caloriesPerCup
+        else
+            // If not found, add new ingredient to local list
+            call addIngredientLocal(ingredientName, caloriesPerCup)
+
+    // Add new ingredient to local list
+    method addIngredientLocal(ingredientName, caloriesPerCup)
+        // Check if ingredient already exists to prevent duplicates
+        if ingredientName found in localIngredientList
+            return "Error: Ingredient exists"
+        else
+            // Add new ingredient to local list
+            add ingredient to localIngredientList with ingredientName and caloriesPerCup
+
+    // Add new ingredient to default list for long-term storage
+    method addIngredientDefault(ingredientName, caloriesPerCup)
+        // Check if ingredient already exists in default list
+        if ingredientName found in defaultIngredientList
+            return "Error: Ingredient exists"
+        else
+            // Add new ingredient to default list
+            add ingredient to defaultIngredientList with ingredientName and caloriesPerCup
+
+    // Retrieve an ingredient's name from the local list
+    method getIngredientName(ingredientName) -> string
+        // Check if ingredient exists in local list
+        if ingredientName found in localIngredientList
+            return ingredientName
+        else
+            return "Error: Ingredient not found"
+
+    // Retrieve calorie count per cup for an ingredient from the local list
+    method getCaloriesPerCup(ingredientName) -> double
+        // Check if ingredient exists in local list
+        if ingredientName found in localIngredientList
+            return caloriesPerCup for ingredientName
+        else
+            return "Error: Ingredient not found"
+
+   // Synchronize local ingredient list with default list
+   method syncIngredientLists()
+        // Loop through local list and add/update entries in default list as necessary
+        for each ingredient in localIngredientList
+            if ingredient not found in defaultIngredientList or ingredient.caloriesPerCup NOT EQUAL defaultIngredientList[ingredient.ingredientName].caloriesPerCup
+                call addIngredientDefault(ingredient.ingredientName, ingredient.caloriesPerCup)
+
+    // Save default ingredient list to file for persistence
+    method saveIngredientList()
+        convert defaultIngredientList to JSON
+        write JSON to default_ingredient_list.json

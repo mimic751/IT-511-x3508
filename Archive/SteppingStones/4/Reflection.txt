@@ -1,0 +1,5 @@
+This was a fun assignment. It reminded me of my days
+writing scripts for BASH.
+
+In fact I have seen little difference in automation and applications so far. 
+I cannot wait to learn how to add a gui. That is something that has alleded me forever
